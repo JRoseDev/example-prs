@@ -2,7 +2,7 @@ import Modal, { ModalButtons } from 'components/Modal';
 import Button from 'components/button/Button';
 import { TextTileConfig } from 'dashboard-engine/tiles/text';
 import type { TextConfig } from 'dashboard-engine/visualisations/Text/Config';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextPreview } from './TextPreview';
 
 /**
@@ -21,12 +21,38 @@ export const TextTileEditor: React.FC<{
     const [fontSize, setFontSize] = useState();
     const [align, setAlign] = useState<TextConfig['align']>('left');
 
+    useEffect(() => {
+        console.log('Setting default values');
+
+        if (config.visualisation?.config) {
+            setContent(config.visualisation?.config?.content || 'Sample text');
+            setFontSize(config.visualisation?.config?.fontSize || 16);
+            setAlign(config.visualisation?.config?.align || 'left');
+        }
+    }, []);
+
+    const renderTextArea = () => {
+        return (
+            <div className='mb-4'>
+                <label className='block mb-2 text-sm font-medium'>Content</label>
+                <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder='Type some text here'
+                    className='w-full h-32 p-3 border border-gray-300 rounded-md'
+                />
+            </div>
+        );
+    };
+
     return (
         <Modal title='Edit Text Tile' close={onClose} maxWidth='max-w-4xl'>
             <div className='flex min-h-[400px]'>
                 {/* Left side - Form controls */}
                 <div className='flex-1 p-6 border-r'>
                     <h2 className='mb-4 text-xl font-bold'>Edit text tile</h2>
+
+                    {renderTextArea()}
 
                     <div className='mb-4'>
                         <label className='block mb-2 text-sm font-medium'>Font Size</label>
