@@ -2,7 +2,7 @@ import Modal, { ModalButtons } from 'components/Modal';
 import Button from 'components/button/Button';
 import { TextTileConfig } from 'dashboard-engine/tiles/text';
 import type { TextConfig } from 'dashboard-engine/visualisations/Text/Config';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { TextPreview } from './TextPreview';
 
 /**
@@ -20,6 +20,7 @@ export const TextTileEditor: React.FC<{
     const [content, setContent] = useState('');
     const [fontSize, setFontSize] = useState();
     const [align, setAlign] = useState<TextConfig['align']>('left');
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         console.log('Setting default values');
@@ -30,6 +31,34 @@ export const TextTileEditor: React.FC<{
             setAlign(config.visualisation?.config?.align || 'left');
         }
     }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+
+        try {
+            const response = await fetch('/api/text-tile/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: config.id,
+                    content,
+                    fontSize,
+                    align
+                })
+            });
+
+            if (response.ok) {
+                console.log('Saved successfully');
+                onClose();
+            } else {
+                console.error('Save failed');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const renderTextArea = () => {
         return (
@@ -88,8 +117,8 @@ export const TextTileEditor: React.FC<{
                         <Button type='button' onClick={onClose} variant='tertiary'>
                             Cancel
                         </Button>
-                        <Button type='button' onClick={() => onClose()}>
-                            Save
+                        <Button type='button' onClick={handleSave} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save'}
                         </Button>
                     </ModalButtons>
                 </div>
