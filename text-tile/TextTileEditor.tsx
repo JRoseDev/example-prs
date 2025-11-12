@@ -20,6 +20,59 @@ export const TextTileEditor: React.FC<{
     const [content, setContent] = useState('');
     const [fontSize, setFontSize] = useState();
     const [align, setAlign] = useState<TextConfig['align']>('left');
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        console.log('Setting default values');
+
+        if (config.visualisation?.config) {
+            setContent(config.visualisation?.config?.content || 'Sample text');
+            setFontSize(config.visualisation?.config?.fontSize || 16);
+            setAlign(config.visualisation?.config?.align || 'left');
+        }
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+
+        try {
+            const response = await fetch('/api/text-tile/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: config.id,
+                    content,
+                    fontSize,
+                    align
+                })
+            });
+
+            if (response.ok) {
+                console.log('Saved successfully');
+                onClose();
+            } else {
+                console.error('Save failed');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const renderTextArea = () => {
+        return (
+            <div className='mb-4'>
+                <label className='block mb-2 text-sm font-medium'>Content</label>
+                <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder='Type some text here'
+                    className='w-full h-32 p-3 border border-gray-300 rounded-md'
+                />
+            </div>
+        );
+    };
 
     return (
         <Modal title='Edit Text Tile' close={onClose} maxWidth='max-w-4xl'>
@@ -27,6 +80,8 @@ export const TextTileEditor: React.FC<{
                 {/* Left side - Form controls */}
                 <div className='flex-1 p-6 border-r'>
                     <h2 className='mb-4 text-xl font-bold'>Edit text tile</h2>
+
+                    {renderTextArea()}
 
                     <div className='mb-4'>
                         <label className='block mb-2 text-sm font-medium'>Font Size</label>
@@ -62,8 +117,8 @@ export const TextTileEditor: React.FC<{
                         <Button type='button' onClick={onClose} variant='tertiary'>
                             Cancel
                         </Button>
-                        <Button type='button' onClick={() => onClose()}>
-                            Save
+                        <Button type='button' onClick={handleSave} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save'}
                         </Button>
                     </ModalButtons>
                 </div>
